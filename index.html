@@ -92,8 +92,21 @@
   .btn { border: 1px solid var(--border); background: var(--chip); color: var(--text-strong); border-radius: 10px; padding: 8px 12px; font-size: 13px; min-height: 38px; }
   .btn:hover { border-color: var(--ring); }
   .btn.small { padding: 6px 10px; font-size: 12px; min-height: 34px; }
-  .slider { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 180px; }
-  input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+  .slider { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 200px; }
+  /* 손가락으로 잡기 쉬운 큰 슬라이더 */
+  input[type=range] {
+    flex: 1; min-width: 0; height: 36px; margin: 0; background: transparent;
+    -webkit-appearance: none; appearance: none; touch-action: manipulation; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--track); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 28px; height: 28px; margin-top: -11px; border-radius: 50%;
+    background: var(--accent); border: 3px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--track); }
+  input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 3px solid var(--surface); }
+  .step { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--chip); color: var(--text-strong); font-size: 18px; line-height: 1; padding: 0; display: grid; place-items: center; touch-action: manipulation; }
+  .step:active { background: var(--now); }
   .val { font-size: 13px; color: var(--text-strong); font-weight: 700; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
   .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .seg button { border: 0; background: var(--chip); color: var(--text-body); padding: 8px 13px; font-size: 13px; min-height: 38px; }
@@ -172,11 +185,11 @@
     <h2><span>간격과 반복</span></h2>
     <div class="row">
       <label class="lbl" for="gap">문장 사이</label>
-      <div class="slider"><input type="range" id="gap" min="0" max="30" step="0.5" /><span class="val" id="gapV"></span></div>
+      <div class="slider"><input type="range" id="gap" min="0" max="10" step="0.5" /><span class="val" id="gapV"></span></div>
     </div>
     <div class="row">
       <label class="lbl" for="roundGap">한 바퀴 뒤</label>
-      <div class="slider"><input type="range" id="roundGap" min="0" max="60" step="1" /><span class="val" id="roundGapV"></span></div>
+      <div class="slider"><input type="range" id="roundGap" min="0" max="10" step="0.5" /><span class="val" id="roundGapV"></span></div>
     </div>
     <div class="row">
       <label class="lbl">반복</label>
@@ -353,10 +366,27 @@
   // ---------- 설정 UI ----------
   function bindRange(id, fmt) {
     const el = $(id), v = $(id + 'V')
+    const min = +el.min, max = +el.max, st = +el.step
+    S[id] = Math.min(max, Math.max(min, +S[id]))
     el.value = S[id]
     const show = () => { v.textContent = fmt(+el.value) }
     show()
-    el.addEventListener('input', () => { S[id] = +el.value; show(); persist(); onSetting(id) })
+    const commit = () => { S[id] = +el.value; show(); persist(); onSetting(id) }
+    el.addEventListener('input', commit)
+    // 슬라이드가 어려울 때를 위한 − / + 버튼
+    const mk = (label, dir) => {
+      const b = document.createElement('button')
+      b.type = 'button'; b.className = 'step'; b.textContent = label
+      b.setAttribute('aria-label', dir < 0 ? '줄이기' : '늘리기')
+      b.onclick = () => {
+        const n = Math.round((+el.value + dir * st) / st) * st
+        el.value = Math.min(max, Math.max(min, +n.toFixed(2)))
+        commit()
+      }
+      return b
+    }
+    el.before(mk('−', -1))
+    el.after(mk('+', 1))
   }
   const pct = (x) => Math.round(x * 100) + '%'
   bindRange('rate', (x) => x.toFixed(2) + '배')

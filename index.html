@@ -86,6 +86,14 @@
   }
   textarea::placeholder { color: var(--muted); opacity: .55; }
   textarea:focus, select:focus, input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
+  .affcol { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .affcol textarea { flex: none; width: 100%; }
+  .clip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .clip .btn.small { min-height: 30px; padding: 4px 9px; font-size: 12px; }
+  .clip .tag { color: var(--text-strong); font-weight: 600; margin-right: 2px; }
+  .clip .btn.rec { color: #c0392b; border-color: #e5b4ae; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #d64535; margin-right: 4px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
   .hint { font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.6; }
   .saved { font-size: 11.5px; color: var(--muted); font-weight: 400; }
   button { font: inherit; cursor: pointer; }
@@ -178,6 +186,33 @@
     </div>
     <p class="hint" id="voiceNote"></p>
     <p class="hint">목소리는 기기에 깔린 음성(TTS)을 써요. 기기·브라우저마다 고를 수 있는 목소리가 달라요.</p>
+  </section>
+
+  <!-- 내 목소리 보정 -->
+  <section class="card">
+    <h2><span>내 목소리 보정</span><button class="btn small" id="fxPreview" type="button">보정 들어보기</button></h2>
+    <div class="row">
+      <label class="lbl">보정</label>
+      <div class="seg" role="group" aria-label="보정 켜기">
+        <button type="button" id="fxOnBtn">켜기</button>
+        <button type="button" id="fxOffBtn">끄기</button>
+      </div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="fxTone">차분하게</label>
+      <div class="slider"><input type="range" id="fxTone" min="0.85" max="1.05" step="0.01" /><span class="val" id="fxToneV"></span></div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="fxWarm">따뜻하게</label>
+      <div class="slider"><input type="range" id="fxWarm" min="0" max="1" step="0.05" /><span class="val" id="fxWarmV"></span></div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="fxRev">잔향</label>
+      <div class="slider"><input type="range" id="fxRev" min="0" max="1" step="0.05" /><span class="val" id="fxRevV"></span></div>
+    </div>
+    <p class="hint">위 확언 칸마다 ‘녹음’으로 내 목소리를 남기면, 그 문장은 기계 음성 대신 녹음을 틀어요. 앞뒤 무음은 자동으로 잘라 내요.</p>
+    <p class="hint">차분하게: 낮출수록 음과 속도가 함께 살짝 낮아져요. 따뜻하게: 날카로운 소리를 누르고 낮은 울림을 살려요. 잔향: 넓은 방처럼 소리가 은은하게 퍼져요. 웅웅거림과 큰 소리 차이도 함께 정리해요.</p>
+    <p class="hint">보정은 녹음에만 적용돼요. ‘파일’로 올린 소리(예: 클로바더빙·ElevenLabs로 만든 AI 음성)는 그대로 재생해요.</p>
   </section>
 
   <!-- 흐름 -->
@@ -293,6 +328,7 @@
   const defaults = {
     rate: 0.85, pitch: 1, vvol: 1, voice: '', voiceAuto: true, gap: 4, roundGap: 8,
     mode: 'count', repeat: 3, endKeep: false,
+    fxOn: true, fxTone: 0.96, fxWarm: 0.5, fxRev: 0.3,
     bg: 'rain', bgVol: 0.35, freq: 'none', freqVol: 0.15, fileId: null,
   }
   const data = store.load()
@@ -312,6 +348,10 @@
       $('saved').textContent = ok ? '저장됨' : '저장 실패(브라우저 저장소 막힘)'
     }, 300)
   }
+
+  const clipMeta = {} // `${월}:${번호}` -> { kind, name, dur, start, end }
+  const clipKey = (i, m = curMonth) => `${m}:${i}`
+  let rec = null // 녹음 중 { i, mr, t0, timer }
 
   // ---------- 확언 입력 ----------
   const lines = () => data.months[curMonth] || (data.months[curMonth] = Array(N).fill(''))
@@ -340,8 +380,15 @@
       t.placeholder = '예) ' + examples[i]
       t.setAttribute('aria-label', `확언 ${i + 1}`)
       t.addEventListener('input', () => { lines()[i] = t.value; autosize(t); persist() })
-      row.append(num, t)
+      const col = document.createElement('div')
+      col.className = 'affcol'
+      const clip = document.createElement('div')
+      clip.className = 'clip'
+      clip.id = 'clip-' + i
+      col.append(t, clip)
+      row.append(num, col)
       box.append(row)
+      renderClip(i)
       requestAnimationFrame(() => autosize(t))
     }
     $('saved').textContent = ''
@@ -360,7 +407,7 @@
     const from = keys[keys.length - 1]
     if (lines().some((s) => s.trim()) && !confirm(`이번 달 문장을 ${from.replace('-', '년 ')}월 문장으로 바꿀까요?`)) return
     data.months[curMonth] = data.months[from].slice()
-    renderAffs(); persist()
+    copyClips(from, curMonth).then(() => { renderAffs(); persist() })
   })
 
   // ---------- 설정 UI ----------
@@ -396,6 +443,9 @@
   bindRange('roundGap', (x) => x + '초')
   bindRange('bgVol', pct)
   bindRange('freqVol', pct)
+  bindRange('fxTone', (x) => x.toFixed(2) + '배')
+  bindRange('fxWarm', pct)
+  bindRange('fxRev', pct)
 
   function seg(aId, bId, getOn, set) {
     const a = $(aId), b = $(bId)
@@ -408,6 +458,7 @@
   const paintMode = seg('modeCount', 'modeLoop', () => S.mode === 'count', (c) => { S.mode = c ? 'count' : 'loop'; $('countWrap').style.display = c ? '' : 'none' })
   $('countWrap').style.display = S.mode === 'count' ? '' : 'none'
   void paintMode
+  seg('fxOnBtn', 'fxOffBtn', () => S.fxOn, (on) => { S.fxOn = on })
   seg('endStop', 'endKeep', () => !S.endKeep, (stop) => { S.endKeep = !stop })
   $('repeat').value = S.repeat
   $('repeat').addEventListener('input', () => {
@@ -512,6 +563,7 @@
     if (ctx) return ctx
     const AC = window.AudioContext || window.webkitAudioContext
     if (!AC) return null
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback' } catch {}
     ctx = new AC()
     master = ctx.createGain()
     master.gain.value = 0
@@ -672,17 +724,21 @@
   const DB = 'maedeup_affirm_files'
   function idb() {
     return new Promise((res, rej) => {
-      const r = indexedDB.open(DB, 1)
-      r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'id' })
+      const r = indexedDB.open(DB, 2)
+      r.onupgradeneeded = () => {
+        const db = r.result
+        if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' })
+        if (!db.objectStoreNames.contains('clips')) db.createObjectStore('clips', { keyPath: 'key' })
+      }
       r.onsuccess = () => res(r.result)
       r.onerror = () => rej(r.error)
     })
   }
-  async function tx(mode, fn) {
+  async function tx(mode, fn, store = 'files') {
     const db = await idb()
     return new Promise((res, rej) => {
-      const t = db.transaction('files', mode)
-      const st = t.objectStore('files')
+      const t = db.transaction(store, mode)
+      const st = t.objectStore(store)
       const out = fn(st)
       t.oncomplete = () => res(out && out.result !== undefined ? out.result : out)
       t.onerror = () => rej(t.error)
@@ -755,6 +811,209 @@
   })
   if ('indexedDB' in window) { refreshFiles(); loadFileAudio() }
 
+  // ---------- 문장별 녹음·파일 ----------
+  const clipBufs = {}
+  let curSrc = null
+  let revBuf = null
+  const fmtSec = (x) => (Math.round(x * 10) / 10).toFixed(1) + '초'
+  function decode(blob) {
+    return blob.arrayBuffer().then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)))
+  }
+  // 앞뒤 무음 자르기(조용한 구간 판정)
+  function trimPoints(buf) {
+    const d = buf.getChannelData(0), sr = buf.sampleRate
+    let peak = 0
+    for (let k = 0; k < d.length; k += 16) peak = Math.max(peak, Math.abs(d[k]))
+    const th = Math.max(0.01, peak * 0.08)
+    let a = 0, b = d.length - 1
+    while (a < d.length && Math.abs(d[a]) < th) a++
+    while (b > a && Math.abs(d[b]) < th) b--
+    if (a >= b) return { start: 0, end: buf.duration }
+    return { start: Math.max(0, a / sr - 0.12), end: Math.min(buf.duration, b / sr + 0.3) }
+  }
+  async function getClipBuf(key) {
+    if (clipBufs[key]) return clipBufs[key]
+    const r = await tx('readonly', (st) => st.get(key), 'clips')
+    if (!r) return null
+    ensureCtx()
+    clipBufs[key] = await decode(r.blob)
+    return clipBufs[key]
+  }
+  async function putClip(i, blob, kind, name) {
+    const key = clipKey(i)
+    if (!ensureCtx()) return
+    let buf
+    try { buf = await decode(blob) } catch { alert('이 소리는 재생할 수 없는 형식이에요. mp3나 m4a 파일로 올려 주세요.'); return }
+    const tp = kind === 'rec' ? trimPoints(buf) : { start: 0, end: buf.duration }
+    const meta = { kind, name, dur: tp.end - tp.start, start: tp.start, end: tp.end }
+    try {
+      await tx('readwrite', (st) => st.put({ key, blob, ...meta }), 'clips')
+    } catch { alert('저장하지 못했어요(저장 공간이 부족할 수 있어요).'); return }
+    clipMeta[key] = meta
+    clipBufs[key] = buf
+    renderClip(i)
+  }
+  async function delClip(i) {
+    const key = clipKey(i)
+    if (!confirm(`${i + 1}번 문장의 ${clipMeta[key].kind === 'rec' ? '녹음' : '파일'}을 지울까요?`)) return
+    await tx('readwrite', (st) => st.delete(key), 'clips')
+    delete clipMeta[key]; delete clipBufs[key]
+    renderClip(i)
+  }
+  async function copyClips(from, to) {
+    for (let i = 0; i < N; i++) {
+      const src = clipKey(i, from), dst = clipKey(i, to)
+      try {
+        const r = await tx('readonly', (st) => st.get(src), 'clips')
+        if (r) {
+          await tx('readwrite', (st) => st.put({ ...r, key: dst }), 'clips')
+          clipMeta[dst] = { kind: r.kind, name: r.name, dur: r.dur, start: r.start, end: r.end }
+        } else if (clipMeta[dst]) {
+          await tx('readwrite', (st) => st.delete(dst), 'clips')
+          delete clipMeta[dst]
+        }
+        delete clipBufs[dst]
+      } catch {}
+    }
+  }
+  async function loadClipMeta() {
+    try {
+      const all = await tx('readonly', (st) => st.getAll(), 'clips')
+      ;(all || []).forEach((c) => { clipMeta[c.key] = { kind: c.kind, name: c.name, dur: c.dur, start: c.start, end: c.end } })
+    } catch {}
+    for (let i = 0; i < N; i++) renderClip(i)
+  }
+
+  function renderClip(i) {
+    const box = document.getElementById('clip-' + i)
+    if (!box) return
+    box.innerHTML = ''
+    const btn = (label, fn, cls = '') => {
+      const b = document.createElement('button')
+      b.type = 'button'; b.className = 'btn small ' + cls; b.textContent = label; b.onclick = fn
+      box.append(b); return b
+    }
+    if (rec && rec.i === i) {
+      const s = document.createElement('span')
+      s.innerHTML = '<span class="dot"></span>녹음 중 ' + fmtSec((Date.now() - rec.t0) / 1000)
+      box.append(s)
+      btn('■ 멈추고 저장', () => rec && rec.mr.stop(), 'rec')
+      return
+    }
+    const m = clipMeta[clipKey(i)]
+    if (m) {
+      const tag = document.createElement('span')
+      tag.className = 'tag'
+      tag.textContent = m.kind === 'rec' ? `내 녹음 · ${fmtSec(m.dur)}` : `파일 · ${m.name}`
+      box.append(tag)
+      btn('▶ 듣기', () => previewClip(i))
+      if (m.kind === 'rec') btn('다시 녹음', () => startRec(i))
+      btn('삭제', () => delClip(i))
+      return
+    }
+    btn('● 녹음', () => startRec(i), 'rec')
+    const fileBtn = btn('파일 올리기', () => fin.click())
+    const fin = document.createElement('input')
+    fin.type = 'file'; fin.accept = 'audio/*'; fin.hidden = true
+    fin.onchange = () => { const f = fin.files[0]; if (f) putClip(i, f, 'file', f.name) }
+    fileBtn.after(fin)
+  }
+
+  async function startRec(i) {
+    if (rec) return
+    if (state !== 'idle') { alert('재생을 멈춘 뒤에 녹음해 주세요.'); return }
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { alert('이 브라우저에서는 녹음을 쓸 수 없어요.'); return }
+    ensureCtx()
+    let stream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+    } catch { alert('마이크를 쓸 수 있게 허용해 주세요. (설정 → 사파리 → 마이크)'); return }
+    const type = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find((t) => MediaRecorder.isTypeSupported?.(t))
+    const mr = new MediaRecorder(stream, type ? { mimeType: type } : undefined)
+    const chunks = []
+    mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data) }
+    mr.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop())
+      clearInterval(r.timer)
+      rec = null
+      const blob = new Blob(chunks, { type: mr.mimeType || type || 'audio/mp4' })
+      if (blob.size) await putClip(i, blob, 'rec', '내 녹음')
+      renderClip(i)
+    }
+    const r = (rec = { i, mr, t0: Date.now(), timer: 0 })
+    r.timer = setInterval(() => {
+      renderClip(i)
+      if (Date.now() - r.t0 > 30000 && mr.state === 'recording') mr.stop() // 한 문장 최대 30초
+    }, 250)
+    mr.start()
+    renderClip(i)
+  }
+
+  function makeImpulse() {
+    const sec = 2.6, len = Math.floor(ctx.sampleRate * sec)
+    const b = ctx.createBuffer(2, len, ctx.sampleRate)
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch)
+      for (let k = 0; k < len; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / len, 3.2)
+    }
+    return b
+  }
+  let clipGen = 0
+  function stopClip() { clipGen++; if (curSrc) { try { curSrc.stop() } catch {} curSrc = null } }
+  async function playClip(key) {
+    const m = clipMeta[key]
+    if (!m || !ensureCtx()) return
+    ctx.resume()
+    const gen = clipGen
+    let buf
+    try { buf = await getClipBuf(key) } catch { buf = null }
+    if (!buf || gen !== clipGen) return
+    const fx = m.kind === 'rec' && S.fxOn
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    src.playbackRate.value = fx ? S.fxTone : 1
+    const out = ctx.createGain()
+    out.gain.value = S.vvol
+    out.connect(ctx.destination)
+    if (fx) {
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 85
+      const low = ctx.createBiquadFilter(); low.type = 'lowshelf'; low.frequency.value = 220; low.gain.value = S.fxWarm * 5
+      const high = ctx.createBiquadFilter(); high.type = 'highshelf'; high.frequency.value = 5500; high.gain.value = -S.fxWarm * 6
+      const comp = ctx.createDynamicsCompressor()
+      comp.threshold.value = -26; comp.ratio.value = 3; comp.knee.value = 18; comp.attack.value = 0.005; comp.release.value = 0.2
+      const make = ctx.createGain(); make.gain.value = 1.35
+      src.connect(hp).connect(low).connect(high).connect(comp).connect(make)
+      make.connect(out)
+      if (S.fxRev > 0) {
+        const conv = ctx.createConvolver(); conv.buffer = revBuf || (revBuf = makeImpulse())
+        const wet = ctx.createGain(); wet.gain.value = S.fxRev * 0.55
+        make.connect(conv).connect(wet).connect(out)
+      }
+    } else {
+      src.connect(out)
+    }
+    if (curSrc) { try { curSrc.stop() } catch {} }
+    curSrc = src
+    await new Promise((res) => {
+      src.onended = res
+      src.start(0, m.start || 0, (m.end || buf.duration) - (m.start || 0))
+    })
+    if (curSrc === src) curSrc = null
+    setTimeout(() => { try { out.disconnect() } catch {} }, 3000) // 잔향 꼬리까지 들리게
+  }
+  function previewClip(i) {
+    if (state !== 'idle') return
+    ensureCtx(); ctx.resume()
+    playClip(clipKey(i))
+  }
+  $('fxPreview').addEventListener('click', () => {
+    if (state !== 'idle') return
+    const i = [...Array(N).keys()].find((k) => clipMeta[clipKey(k)]?.kind === 'rec')
+    if (i === undefined) { alert('먼저 위 확언 칸에서 ‘● 녹음’으로 한 문장을 녹음해 주세요.'); return }
+    previewClip(i)
+  })
+  if ('indexedDB' in window) loadClipMeta()
+
   // ---------- 재생 흐름 ----------
   let state = 'idle' // idle | playing | paused
   let pos = { round: 0, i: 0 }
@@ -773,7 +1032,8 @@
       tick()
     })
   }
-  function activeIdx() { return lines().map((s, i) => (s.trim() ? i : -1)).filter((i) => i >= 0) }
+  const hasLine = (i) => !!((lines()[i] || '').trim() || clipMeta[clipKey(i)])
+  function activeIdx() { return [...Array(N).keys()].filter(hasLine) }
   function totalRounds() { return S.mode === 'loop' ? Infinity : S.repeat }
   function highlight(i) {
     document.querySelectorAll('.aff').forEach((el) => el.classList.toggle('now', +el.dataset.i === i))
@@ -805,10 +1065,12 @@
       while (pos.i < N) {
         if (id !== runId) return
         const text = (lines()[pos.i] || '').trim()
-        if (text) {
+        if (hasLine(pos.i)) {
           highlight(pos.i)
-          setStatus(roundLabel(pos.round), text)
-          await speak(text)
+          const key = clipKey(pos.i)
+          setStatus(roundLabel(pos.round), text || (clipMeta[key].kind === 'rec' ? '(내 녹음)' : '(올린 음성)'))
+          if (clipMeta[key]) await playClip(key)
+          else await speak(text)
           if (id !== runId) return
           const more = activeIdx().some((k) => k > pos.i)
           if (more) {
@@ -845,6 +1107,7 @@
       // 일시정지: 지금 문장은 처음부터 다시 읽도록 위치만 기억
       runId++
       synth && synth.cancel()
+      stopClip()
       state = 'paused'
       if (ctx) ctx.suspend()
       if (fileAudio) fileAudio.pause()
@@ -871,6 +1134,7 @@
   $('stopBtn').addEventListener('click', () => {
     runId++
     synth && synth.cancel()
+    stopClip()
     state = 'idle'
     pos = { round: 0, i: 0 }
     if (ctx) ctx.resume()

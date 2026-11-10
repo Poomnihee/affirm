@@ -62,15 +62,15 @@
     -webkit-font-smoothing: antialiased;
   }
   .wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 140px; }
-  h1 { color: var(--text-strong); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 4px; text-align: center; }
-  .sub { text-align: center; color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  h1 { color: var(--text-strong); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 4px; text-align: center; }
+  .sub { text-align: center; color: var(--muted); font-size: 13px; margin: 0 0 20px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px var(--shadow); }
-  .card h2 { color: var(--text-strong); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card h2 { color: var(--text-strong); font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .row + .row { margin-top: 12px; }
-  label.lbl { font-size: 14px; color: var(--text-strong); min-width: 84px; }
+  label.lbl { font-size: 13px; color: var(--text-strong); min-width: 76px; }
   input[type=month], select, input[type=number] {
-    font: inherit; font-size: 15px; color: var(--text-strong); background: var(--chip);
+    font: inherit; font-size: 16px; color: var(--text-strong); background: var(--chip);
     border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; min-height: 40px;
   }
   select { flex: 1; min-width: 0; }
@@ -78,28 +78,28 @@
   .aff { display: flex; gap: 8px; align-items: flex-start; padding: 6px; border-radius: 12px; transition: background .3s; }
   .aff + .aff { margin-top: 4px; }
   .aff.now { background: var(--now); box-shadow: inset 0 0 0 1px var(--ring); }
-  .num { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--track); color: var(--text-strong); font-size: 13px; font-weight: 700; display: grid; place-items: center; margin-top: 8px; }
+  .num { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--track); color: var(--text-strong); font-size: 12px; font-weight: 700; display: grid; place-items: center; margin-top: 8px; }
   .aff.now .num { background: var(--accent); color: var(--on-accent); }
   textarea {
-    flex: 1; font: inherit; font-size: 17px; font-weight: 500; line-height: 1.55; color: var(--text-strong);
+    flex: 1; font: inherit; font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-strong);
     background: var(--chip); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; resize: none; min-height: 44px; overflow: hidden;
   }
   textarea::placeholder { color: var(--muted); opacity: .55; }
   textarea:focus, select:focus, input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
-  .hint { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.6; }
-  .saved { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .hint { font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.6; }
+  .saved { font-size: 11.5px; color: var(--muted); font-weight: 400; }
   button { font: inherit; cursor: pointer; }
-  .btn { border: 1px solid var(--border); background: var(--chip); color: var(--text-strong); border-radius: 10px; padding: 8px 12px; font-size: 14px; min-height: 40px; }
+  .btn { border: 1px solid var(--border); background: var(--chip); color: var(--text-strong); border-radius: 10px; padding: 8px 12px; font-size: 13px; min-height: 38px; }
   .btn:hover { border-color: var(--ring); }
-  .btn.small { padding: 6px 10px; font-size: 13px; min-height: 34px; }
+  .btn.small { padding: 6px 10px; font-size: 12px; min-height: 34px; }
   .slider { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 180px; }
   input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
-  .val { font-size: 14px; color: var(--text-strong); font-weight: 700; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+  .val { font-size: 13px; color: var(--text-strong); font-weight: 700; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
   .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-  .seg button { border: 0; background: var(--chip); color: var(--text-body); padding: 8px 14px; font-size: 14px; min-height: 40px; }
+  .seg button { border: 0; background: var(--chip); color: var(--text-body); padding: 8px 13px; font-size: 13px; min-height: 38px; }
   .seg button.on { background: var(--accent); color: var(--on-accent); }
   .files { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-  .file { display: flex; align-items: center; gap: 8px; font-size: 13.5px; background: var(--chip); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px 6px 12px; }
+  .file { display: flex; align-items: center; gap: 8px; font-size: 12.5px; background: var(--chip); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px 6px 12px; }
   .file span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
   .x { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 2px 6px; }
@@ -112,14 +112,14 @@
   }
   .bar-in { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
   .status { flex: 1; min-width: 0; }
-  .status b { display: block; font-size: 14px; color: var(--text-strong); }
-  .status small { display: block; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status b { display: block; font-size: 13px; color: var(--text-strong); }
+  .status small { display: block; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .play { width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; flex: none; }
   .play:hover { background: var(--accent-hover); }
   .stop { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--chip); color: var(--text-strong); display: grid; place-items: center; flex: none; }
   .stop:disabled { opacity: .4; cursor: default; }
   svg { display: block; }
-  .warn { background: var(--now); border: 1px solid var(--border); color: var(--text-strong); border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: none; line-height: 1.6; }
+  .warn { background: var(--now); border: 1px solid var(--border); color: var(--text-strong); border-radius: 12px; padding: 10px 12px; font-size: 12px; margin-bottom: 14px; display: none; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -149,6 +149,7 @@
     <div class="row">
       <label class="lbl" for="voice">목소리</label>
       <select id="voice"></select>
+      <button class="btn small" id="reloadVoices" type="button">목록 다시 읽기</button>
     </div>
     <div class="row">
       <label class="lbl" for="rate">말 빠르기</label>
@@ -184,7 +185,7 @@
         <button type="button" id="modeLoop">무한 반복</button>
       </div>
       <span id="countWrap" class="row" style="gap:6px;margin:0">
-        <input type="number" id="repeat" min="1" max="999" aria-label="반복 횟수" /> <span style="font-size:14px">번</span>
+        <input type="number" id="repeat" min="1" max="999" aria-label="반복 횟수" /> <span style="font-size:13px">번</span>
       </span>
     </div>
     <div class="row">
@@ -411,6 +412,7 @@
     sel.innerHTML = ''
     if (!voices.length) {
       sel.innerHTML = '<option value="">기본 목소리</option>'
+      $('voiceNote').textContent = '아직 기기에서 목소리 목록을 받지 못했어요. 잠시 뒤 ‘목록 다시 읽기’를 눌러 주세요.'
       return
     }
     voices.forEach((v, i) => {
@@ -426,11 +428,17 @@
     $('voiceNote').textContent = hasSiri
       ? (voiceRank(voices[0]) === 0 ? '시리 2번 목소리를 찾아서 골라 뒀어요.' : '시리 목소리는 있지만 2번은 목록에 없어요. 목록에서 가장 비슷한 걸 골라 주세요.')
       : '이 기기에선 웹페이지에 시리 목소리가 열려 있지 않아요. 아이폰이라면 설정 → 손쉬운 사용 → 말하기 콘텐츠 → 음성 → 한국어에서 ‘프리미엄’이나 ‘향상된’ 음성을 받으면, 다음부터 자동으로 그 목소리를 골라요.'
+    $('voiceNote').textContent += ` (찾은 한국어 목소리 ${ko.length}개: ${ko.map((v) => v.name).join(', ') || '없음'})`
     if (!ko.length && all.length) warn('이 기기에서 한국어 목소리를 찾지 못했어요. 기기 설정에서 한국어 음성(TTS)을 설치하면 더 자연스러워요.')
   }
   if (synth) {
     loadVoices()
     synth.addEventListener?.('voiceschanged', loadVoices)
+    // 사파리는 목록을 늦게 주거나 이벤트를 안 보내는 경우가 있어 몇 번 더 확인
+    let tries = 0
+    const iv = setInterval(() => { loadVoices(); if (++tries >= 10) clearInterval(iv) }, 600)
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadVoices() })
+    $('reloadVoices').addEventListener('click', loadVoices)
   } else {
     warn('이 브라우저는 음성 읽기(TTS)를 지원하지 않아요. 크롬, 사파리, 엣지 최신 버전에서 열어 주세요.')
   }

@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>이달의 확언</title>
+<meta name="description" content="달마다 정한 확언 다섯 문장을 잔잔한 배경음 위로 읽어 주는 플레이어." />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="확언" />
+<meta name="theme-color" content="#f5f5f3" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#151516" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%23232326%22/%3E%3Cpath d=%22M16 9l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z%22 fill=%22%23ffffff%22/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f5f3;
+    --text-strong: #1b1b1d;
+    --text-body: #38383b;
+    --muted: #6b6b70;
+    --accent: #232326;
+    --accent-hover: #000000;
+    --on-accent: #ffffff;
+    --border: #e2e2de;
+    --ring: #9a9aa0;
+    --track: #ececea;
+    --surface: #ffffff;
+    --chip: #fafaf9;
+    --now: #efefec;
+    --shadow: rgba(20, 20, 22, 0.05);
+    --bar: rgba(255, 255, 255, 0.94);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151516;
+      --text-strong: #f3f3f1;
+      --text-body: #d6d6d3;
+      --muted: #9b9ba0;
+      --accent: #f3f3f1;
+      --accent-hover: #ffffff;
+      --on-accent: #151516;
+      --border: #2f2f32;
+      --ring: #6b6b70;
+      --track: #2a2a2d;
+      --surface: #1e1e20;
+      --chip: #242427;
+      --now: #2c2c30;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --bar: rgba(30, 30, 32, 0.94);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif;
+    color: var(--text-body);
+    word-break: keep-all;
+    min-height: 100vh;
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 140px; }
+  h1 { color: var(--text-strong); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 4px; text-align: center; }
+  .sub { text-align: center; color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px var(--shadow); }
+  .card h2 { color: var(--text-strong); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .row + .row { margin-top: 12px; }
+  label.lbl { font-size: 14px; color: var(--text-strong); min-width: 84px; }
+  input[type=month], select, input[type=number] {
+    font: inherit; font-size: 15px; color: var(--text-strong); background: var(--chip);
+    border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; min-height: 40px;
+  }
+  select { flex: 1; min-width: 0; }
+  input[type=number] { width: 80px; }
+  .aff { display: flex; gap: 8px; align-items: flex-start; padding: 6px; border-radius: 12px; transition: background .3s; }
+  .aff + .aff { margin-top: 4px; }
+  .aff.now { background: var(--now); box-shadow: inset 0 0 0 1px var(--ring); }
+  .num { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--track); color: var(--text-strong); font-size: 13px; font-weight: 700; display: grid; place-items: center; margin-top: 8px; }
+  .aff.now .num { background: var(--accent); color: var(--on-accent); }
+  textarea {
+    flex: 1; font: inherit; font-size: 17px; font-weight: 500; line-height: 1.55; color: var(--text-strong);
+    background: var(--chip); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; resize: none; min-height: 44px; overflow: hidden;
+  }
+  textarea::placeholder { color: var(--muted); opacity: .55; }
+  textarea:focus, select:focus, input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
+  .hint { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.6; }
+  .saved { font-size: 12px; color: var(--muted); font-weight: 400; }
+  button { font: inherit; cursor: pointer; }
+  .btn { border: 1px solid var(--border); background: var(--chip); color: var(--text-strong); border-radius: 10px; padding: 8px 12px; font-size: 14px; min-height: 40px; }
+  .btn:hover { border-color: var(--ring); }
+  .btn.small { padding: 6px 10px; font-size: 13px; min-height: 34px; }
+  .slider { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 180px; }
+  input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+  .val { font-size: 14px; color: var(--text-strong); font-weight: 700; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: var(--chip); color: var(--text-body); padding: 8px 14px; font-size: 14px; min-height: 40px; }
+  .seg button.on { background: var(--accent); color: var(--on-accent); }
+  .files { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .file { display: flex; align-items: center; gap: 8px; font-size: 13.5px; background: var(--chip); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px 6px 12px; }
+  .file span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .x { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 2px 6px; }
+
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    background: var(--bar); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-top: 1px solid var(--border);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    box-shadow: 0 -6px 20px var(--shadow);
+  }
+  .bar-in { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .status { flex: 1; min-width: 0; }
+  .status b { display: block; font-size: 14px; color: var(--text-strong); }
+  .status small { display: block; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .play { width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; flex: none; }
+  .play:hover { background: var(--accent-hover); }
+  .stop { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--chip); color: var(--text-strong); display: grid; place-items: center; flex: none; }
+  .stop:disabled { opacity: .4; cursor: default; }
+  svg { display: block; }
+  .warn { background: var(--now); border: 1px solid var(--border); color: var(--text-strong); border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: none; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>이달의 확언</h1>
+  <p class="sub">다섯 문장을 정해 두고, 잔잔한 소리 위로 들어요.</p>
+
+  <div class="warn" id="warn"></div>
+
+  <!-- 확언 -->
+  <section class="card">
+    <h2>
+      <span>확언 다섯 문장</span>
+      <span class="saved" id="saved"></span>
+    </h2>
+    <div class="row" style="margin-bottom:12px">
+      <input type="month" id="month" aria-label="달 선택" />
+      <button class="btn small" id="copyPrev" type="button">지난달 문장 가져오기</button>
+    </div>
+    <div id="affList"></div>
+    <p class="hint">적는 즉시 자동 저장돼요. 재생 중에 고쳐도 다음 차례부터 바뀐 문장으로 읽어요. 빈 칸은 건너뜁니다.</p>
+  </section>
+
+  <!-- 목소리 -->
+  <section class="card">
+    <h2><span>목소리와 속도</span><button class="btn small" id="preview" type="button">미리 듣기</button></h2>
+    <div class="row">
+      <label class="lbl" for="voice">목소리</label>
+      <select id="voice"></select>
+    </div>
+    <div class="row">
+      <label class="lbl" for="rate">말 빠르기</label>
+      <div class="slider"><input type="range" id="rate" min="0.5" max="1.5" step="0.05" /><span class="val" id="rateV"></span></div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="pitch">음 높이</label>
+      <div class="slider"><input type="range" id="pitch" min="0.6" max="1.4" step="0.05" /><span class="val" id="pitchV"></span></div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="vvol">목소리 크기</label>
+      <div class="slider"><input type="range" id="vvol" min="0.1" max="1" step="0.05" /><span class="val" id="vvolV"></span></div>
+    </div>
+    <p class="hint" id="voiceNote"></p>
+    <p class="hint">목소리는 기기에 깔린 음성(TTS)을 써요. 기기·브라우저마다 고를 수 있는 목소리가 달라요.</p>
+  </section>
+
+  <!-- 흐름 -->
+  <section class="card">
+    <h2><span>간격과 반복</span></h2>
+    <div class="row">
+      <label class="lbl" for="gap">문장 사이</label>
+      <div class="slider"><input type="range" id="gap" min="0" max="30" step="0.5" /><span class="val" id="gapV"></span></div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="roundGap">한 바퀴 뒤</label>
+      <div class="slider"><input type="range" id="roundGap" min="0" max="60" step="1" /><span class="val" id="roundGapV"></span></div>
+    </div>
+    <div class="row">
+      <label class="lbl">반복</label>
+      <div class="seg" role="group" aria-label="반복 방식">
+        <button type="button" id="modeCount">횟수 정하기</button>
+        <button type="button" id="modeLoop">무한 반복</button>
+      </div>
+      <span id="countWrap" class="row" style="gap:6px;margin:0">
+        <input type="number" id="repeat" min="1" max="999" aria-label="반복 횟수" /> <span style="font-size:14px">번</span>
+      </span>
+    </div>
+    <div class="row">
+      <label class="lbl">끝나면</label>
+      <div class="seg" role="group" aria-label="끝난 뒤 배경음">
+        <button type="button" id="endStop">배경음도 끄기</button>
+        <button type="button" id="endKeep">배경음은 계속</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 배경음 -->
+  <section class="card">
+    <h2><span>배경음</span></h2>
+    <div class="row">
+      <label class="lbl" for="bg">자연·ASMR</label>
+      <select id="bg">
+        <option value="none">없음</option>
+        <option value="rain">빗소리</option>
+        <option value="waves">파도</option>
+        <option value="brown">브라운 노이즈 (깊은 웅웅)</option>
+        <option value="pink">핑크 노이즈 (부드러운 쉬익)</option>
+        <option value="file">내가 올린 소리</option>
+      </select>
+    </div>
+    <div class="row">
+      <label class="lbl" for="bgVol">크기</label>
+      <div class="slider"><input type="range" id="bgVol" min="0" max="1" step="0.01" /><span class="val" id="bgVolV"></span></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <label class="btn small" style="display:inline-flex;align-items:center" for="fileIn">+ 내 ASMR·음악 파일 올리기</label>
+      <input type="file" id="fileIn" accept="audio/*" multiple hidden />
+    </div>
+    <div class="files" id="files"></div>
+    <p class="hint">올린 파일은 이 기기 브라우저 안에만 저장돼요(서버로 보내지 않음). 고르면 ‘내가 올린 소리’로 반복 재생돼요.</p>
+
+    <div class="row" style="margin-top:18px">
+      <label class="lbl" for="freq">주파수</label>
+      <select id="freq">
+        <option value="none">없음</option>
+        <option value="432">432Hz 편안함</option>
+        <option value="528">528Hz 긍정·회복</option>
+        <option value="396">396Hz 불안 내려놓기</option>
+        <option value="174">174Hz 깊은 이완</option>
+        <option value="theta">바이노럴 세타 6Hz (명상, 이어폰)</option>
+        <option value="alpha">바이노럴 알파 10Hz (차분한 집중, 이어폰)</option>
+        <option value="delta">바이노럴 델타 2Hz (잠들기, 이어폰)</option>
+      </select>
+    </div>
+    <div class="row">
+      <label class="lbl" for="freqVol">크기</label>
+      <div class="slider"><input type="range" id="freqVol" min="0" max="1" step="0.01" /><span class="val" id="freqVolV"></span></div>
+    </div>
+    <p class="hint">배경음과 주파수는 겹쳐서 깔 수 있어요. 바이노럴은 왼쪽·오른쪽 귀에 다른 음을 보내는 방식이라 이어폰으로 들어야 해요. 주파수별 효과 이름은 흔히 쓰는 명칭이고, 과학적으로 입증된 효과는 아니에요.</p>
+  </section>
+
+  <p class="hint" style="text-align:center">재생 중엔 화면이 꺼지지 않게 해 둬요. 화면을 잠그면 일부 휴대폰에선 목소리가 멈출 수 있어요.</p>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <button class="stop" id="stopBtn" type="button" aria-label="정지" disabled>
+      <svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="2" fill="currentColor"/></svg>
+    </button>
+    <div class="status">
+      <b id="stTitle">준비됐어요</b>
+      <small id="stLine">재생을 누르면 시작해요</small>
+    </div>
+    <button class="play" id="playBtn" type="button" aria-label="재생">
+      <svg id="icoPlay" width="22" height="22" viewBox="0 0 22 22"><path d="M7 4.5v13l11-6.5z" fill="currentColor"/></svg>
+      <svg id="icoPause" width="22" height="22" viewBox="0 0 22 22" style="display:none"><rect x="5" y="4" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="13" y="4" width="4" height="14" rx="1.2" fill="currentColor"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict'
+  const $ = (id) => document.getElementById(id)
+  const KEY = 'maedeup_affirm_v1'
+  const N = 5
+
+  // ---------- 저장소 ----------
+  const store = {
+    load() {
+      try { return JSON.parse(localStorage.getItem(KEY)) || {} } catch { return {} }
+    },
+    save(d) {
+      try { localStorage.setItem(KEY, JSON.stringify(d)); return true } catch { return false }
+    },
+  }
+  const defaults = {
+    rate: 0.85, pitch: 1, vvol: 1, voice: '', voiceAuto: true, gap: 4, roundGap: 8,
+    mode: 'count', repeat: 3, endKeep: false,
+    bg: 'rain', bgVol: 0.35, freq: 'none', freqVol: 0.15, fileId: null,
+  }
+  const data = store.load()
+  data.months = data.months || {}
+  data.settings = Object.assign({}, defaults, data.settings || {})
+  const S = data.settings
+
+  const pad = (n) => String(n).padStart(2, '0')
+  const monthKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+  let curMonth = monthKey(new Date())
+
+  let saveTimer = null
+  function persist() {
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      const ok = store.save(data)
+      $('saved').textContent = ok ? '저장됨' : '저장 실패(브라우저 저장소 막힘)'
+    }, 300)
+  }
+
+  // ---------- 확언 입력 ----------
+  const lines = () => data.months[curMonth] || (data.months[curMonth] = Array(N).fill(''))
+  const examples = [
+    '나는 지금 이대로도 충분히 괜찮은 사람이다.',
+    '나는 나의 속도로 꾸준히 나아간다.',
+    '나는 나를 다정하게 대할 줄 안다.',
+    '좋은 일은 자연스럽게 나에게 온다.',
+    '나는 오늘 하루를 믿고 맡긴다.',
+  ]
+  function autosize(t) { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px' }
+  function renderAffs() {
+    const box = $('affList')
+    box.innerHTML = ''
+    const L = lines()
+    for (let i = 0; i < N; i++) {
+      const row = document.createElement('div')
+      row.className = 'aff'
+      row.dataset.i = i
+      const num = document.createElement('div')
+      num.className = 'num'
+      num.textContent = i + 1
+      const t = document.createElement('textarea')
+      t.rows = 1
+      t.value = L[i] || ''
+      t.placeholder = '예) ' + examples[i]
+      t.setAttribute('aria-label', `확언 ${i + 1}`)
+      t.addEventListener('input', () => { lines()[i] = t.value; autosize(t); persist() })
+      row.append(num, t)
+      box.append(row)
+      requestAnimationFrame(() => autosize(t))
+    }
+    $('saved').textContent = ''
+  }
+  $('month').value = curMonth
+  $('month').addEventListener('change', (e) => {
+    if (!e.target.value) return
+    curMonth = e.target.value
+    renderAffs()
+  })
+  $('copyPrev').addEventListener('click', () => {
+    const keys = Object.keys(data.months)
+      .filter((k) => k < curMonth && data.months[k].some((s) => s.trim()))
+      .sort()
+    if (!keys.length) { alert('가져올 지난달 문장이 없어요.'); return }
+    const from = keys[keys.length - 1]
+    if (lines().some((s) => s.trim()) && !confirm(`이번 달 문장을 ${from.replace('-', '년 ')}월 문장으로 바꿀까요?`)) return
+    data.months[curMonth] = data.months[from].slice()
+    renderAffs(); persist()
+  })
+
+  // ---------- 설정 UI ----------
+  function bindRange(id, fmt) {
+    const el = $(id), v = $(id + 'V')
+    el.value = S[id]
+    const show = () => { v.textContent = fmt(+el.value) }
+    show()
+    el.addEventListener('input', () => { S[id] = +el.value; show(); persist(); onSetting(id) })
+  }
+  const pct = (x) => Math.round(x * 100) + '%'
+  bindRange('rate', (x) => x.toFixed(2) + '배')
+  bindRange('pitch', (x) => x.toFixed(2))
+  bindRange('vvol', pct)
+  bindRange('gap', (x) => x + '초')
+  bindRange('roundGap', (x) => x + '초')
+  bindRange('bgVol', pct)
+  bindRange('freqVol', pct)
+
+  function seg(aId, bId, getOn, set) {
+    const a = $(aId), b = $(bId)
+    const paint = () => { const on = getOn(); a.classList.toggle('on', on); b.classList.toggle('on', !on) }
+    a.onclick = () => { set(true); paint(); persist() }
+    b.onclick = () => { set(false); paint(); persist() }
+    paint()
+    return paint
+  }
+  const paintMode = seg('modeCount', 'modeLoop', () => S.mode === 'count', (c) => { S.mode = c ? 'count' : 'loop'; $('countWrap').style.display = c ? '' : 'none' })
+  $('countWrap').style.display = S.mode === 'count' ? '' : 'none'
+  void paintMode
+  seg('endStop', 'endKeep', () => !S.endKeep, (stop) => { S.endKeep = !stop })
+  $('repeat').value = S.repeat
+  $('repeat').addEventListener('input', () => {
+    const n = Math.max(1, Math.min(999, parseInt($('repeat').value, 10) || 1))
+    S.repeat = n; persist()
+  })
+
+  $('bg').value = S.bg
+  $('freq').value = S.freq
+  $('bg').addEventListener('change', () => { S.bg = $('bg').value; persist(); onSetting('bg') })
+  $('freq').addEventListener('change', () => { S.freq = $('freq').value; persist(); onSetting('freq') })
+
+  // ---------- 목소리(TTS) ----------
+  const synth = window.speechSynthesis
+  let voices = []
+  // 시리 2번 우선 → 시리 → 프리미엄 → 향상된 음질 → 기기 기본 순으로 추천
+  function voiceRank(v) {
+    const n = v.name.toLowerCase()
+    if (/siri/.test(n) && /(^|\D)2(\D|$)|voice\s*2/.test(n)) return 0
+    if (/siri/.test(n)) return 1
+    if (/premium|프리미엄/.test(n)) return 2
+    if (/enhanced|향상/.test(n)) return 3
+    if (v.localService) return 4
+    return 5
+  }
+  function loadVoices() {
+    if (!synth) return
+    const all = synth.getVoices()
+    const ko = all.filter((v) => /^ko/i.test(v.lang))
+    voices = (ko.length ? ko : all).slice().sort((a, b) => voiceRank(a) - voiceRank(b))
+    const sel = $('voice')
+    sel.innerHTML = ''
+    if (!voices.length) {
+      sel.innerHTML = '<option value="">기본 목소리</option>'
+      return
+    }
+    voices.forEach((v, i) => {
+      const o = document.createElement('option')
+      o.value = v.voiceURI
+      o.textContent = `${v.name}${v.localService ? '' : ' (온라인)'}${i === 0 ? ' · 추천' : ''}`
+      sel.append(o)
+    })
+    // 직접 고른 목소리가 있으면 유지, 아니면 늘 가장 좋은 목소리로 자동 선택
+    if (!S.voiceAuto && S.voice && voices.some((v) => v.voiceURI === S.voice)) sel.value = S.voice
+    else { sel.value = voices[0].voiceURI; S.voice = sel.value; S.voiceAuto = true }
+    const hasSiri = voices.some((v) => /siri/i.test(v.name))
+    $('voiceNote').textContent = hasSiri
+      ? (voiceRank(voices[0]) === 0 ? '시리 2번 목소리를 찾아서 골라 뒀어요.' : '시리 목소리는 있지만 2번은 목록에 없어요. 목록에서 가장 비슷한 걸 골라 주세요.')
+      : '이 기기에선 웹페이지에 시리 목소리가 열려 있지 않아요. 아이폰이라면 설정 → 손쉬운 사용 → 말하기 콘텐츠 → 음성 → 한국어에서 ‘프리미엄’이나 ‘향상된’ 음성을 받으면, 다음부터 자동으로 그 목소리를 골라요.'
+    if (!ko.length && all.length) warn('이 기기에서 한국어 목소리를 찾지 못했어요. 기기 설정에서 한국어 음성(TTS)을 설치하면 더 자연스러워요.')
+  }
+  if (synth) {
+    loadVoices()
+    synth.addEventListener?.('voiceschanged', loadVoices)
+  } else {
+    warn('이 브라우저는 음성 읽기(TTS)를 지원하지 않아요. 크롬, 사파리, 엣지 최신 버전에서 열어 주세요.')
+  }
+  $('voice').addEventListener('change', () => { S.voice = $('voice').value; S.voiceAuto = $('voice').selectedIndex === 0; persist() })
+
+  function warn(msg) { const w = $('warn'); w.textContent = msg; w.style.display = 'block' }
+
+  let keepUtter = null // 크롬에서 발화 객체가 GC되면 onend가 안 오는 문제 방지
+  function speak(text) {
+    return new Promise((resolve) => {
+      if (!synth) return resolve()
+      const u = new SpeechSynthesisUtterance(text)
+      const v = voices.find((x) => x.voiceURI === S.voice)
+      if (v) { u.voice = v; u.lang = v.lang } else u.lang = 'ko-KR'
+      u.rate = S.rate
+      u.pitch = S.pitch
+      u.volume = S.vvol
+      let done = false
+      const fin = () => { if (!done) { done = true; clearTimeout(guard); resolve() } }
+      u.onend = fin
+      u.onerror = fin
+      // 이벤트가 끝내 안 오는 브라우저 대비: 글자 수로 넉넉한 상한
+      const guard = setTimeout(fin, 4000 + (text.length * 400) / S.rate)
+      keepUtter = u
+      synth.cancel()
+      synth.speak(u)
+    })
+  }
+  $('preview').addEventListener('click', () => {
+    const t = lines().find((s) => s.trim()) || examples[0]
+    if (state !== 'idle') return
+    speak(t)
+  })
+
+  // ---------- 배경음(Web Audio) ----------
+  let ctx = null, master = null
+  const layers = { bg: null, freq: null }
+  let fileAudio = null, fileNode = null, fileUrl = null
+
+  function ensureCtx() {
+    if (ctx) return ctx
+    const AC = window.AudioContext || window.webkitAudioContext
+    if (!AC) return null
+    ctx = new AC()
+    master = ctx.createGain()
+    master.gain.value = 0
+    master.connect(ctx.destination)
+    return ctx
+  }
+  function noiseBuffer(kind) {
+    const len = ctx.sampleRate * 6
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate)
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch)
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, last = 0
+      for (let i = 0; i < len; i++) {
+        const w = Math.random() * 2 - 1
+        if (kind === 'brown') {
+          last = (last + 0.02 * w) / 1.02
+          d[i] = last * 3.5
+        } else {
+          b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759
+          b2 = 0.969 * b2 + w * 0.153852; b3 = 0.8665 * b3 + w * 0.3104856
+          b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898
+          d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11
+          b6 = w * 0.115926
+        }
+      }
+      // 루프 이음새 부드럽게
+      const f = Math.floor(ctx.sampleRate * 0.05)
+      for (let i = 0; i < f; i++) { const k = i / f; d[i] *= k; d[len - 1 - i] *= k }
+    }
+    return buf
+  }
+  const bufCache = {}
+  function noiseSrc(kind) {
+    const s = ctx.createBufferSource()
+    s.buffer = bufCache[kind] || (bufCache[kind] = noiseBuffer(kind))
+    s.loop = true
+    return s
+  }
+  function makeLayer(type) {
+    const out = ctx.createGain()
+    out.gain.value = 0
+    const nodes = []
+    const startAll = () => nodes.forEach((n) => n.start && n.start())
+    if (type === 'rain') {
+      const s = noiseSrc('pink')
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 500
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200
+      const g = ctx.createGain(); g.gain.value = 1.4
+      s.connect(hp).connect(lp).connect(g).connect(out)
+      nodes.push(s)
+    } else if (type === 'waves') {
+      const s = noiseSrc('pink')
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900
+      const amp = ctx.createGain(); amp.gain.value = 0.55
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.09
+      const depth = ctx.createGain(); depth.gain.value = 0.45
+      lfo.connect(depth).connect(amp.gain)
+      const lfo2 = ctx.createOscillator(); lfo2.frequency.value = 0.09
+      const d2 = ctx.createGain(); d2.gain.value = 500
+      lfo2.connect(d2).connect(lp.frequency)
+      s.connect(lp).connect(amp).connect(out)
+      nodes.push(s, lfo, lfo2)
+    } else if (type === 'brown' || type === 'pink') {
+      const s = noiseSrc(type)
+      const g = ctx.createGain(); g.gain.value = type === 'brown' ? 1 : 0.8
+      s.connect(g).connect(out)
+      nodes.push(s)
+    } else if (type === 'file') {
+      if (!fileAudio) return null
+      if (!fileNode) fileNode = ctx.createMediaElementSource(fileAudio)
+      try { fileNode.disconnect() } catch {}
+      fileNode.connect(out)
+      fileAudio.loop = true
+      fileAudio.play().catch(() => {})
+    } else if (/^\d+$/.test(type)) {
+      // 단일 톤: 순한 사인파 + 아주 느린 숨결 같은 떨림
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = +type
+      const amp = ctx.createGain(); amp.gain.value = 0.5
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.12
+      const depth = ctx.createGain(); depth.gain.value = 0.15
+      lfo.connect(depth).connect(amp.gain)
+      o.connect(amp).connect(out)
+      nodes.push(o, lfo)
+    } else {
+      // 바이노럴: 왼쪽 base, 오른쪽 base+beat
+      const beat = { theta: 6, alpha: 10, delta: 2 }[type]
+      const base = 200
+      const merger = ctx.createChannelMerger(2)
+      const l = ctx.createOscillator(); l.frequency.value = base
+      const r = ctx.createOscillator(); r.frequency.value = base + beat
+      const gl = ctx.createGain(); gl.gain.value = 0.5
+      const gr = ctx.createGain(); gr.gain.value = 0.5
+      l.connect(gl).connect(merger, 0, 0)
+      r.connect(gr).connect(merger, 0, 1)
+      merger.connect(out)
+      nodes.push(l, r)
+    }
+    out.connect(master)
+    startAll()
+    return { out, nodes, type }
+  }
+  function layerVol(which) { return which === 'bg' ? S.bgVol : S.freqVol * 0.6 }
+  function setLayer(which, type) {
+    if (!ctx) return
+    const old = layers[which]
+    if (old && old.type === type) return
+    const t = ctx.currentTime
+    if (old) {
+      old.out.gain.cancelScheduledValues(t)
+      old.out.gain.setTargetAtTime(0, t, 0.4)
+      setTimeout(() => {
+        old.nodes.forEach((n) => { try { n.stop() } catch {} })
+        if (old.type === 'file' && fileAudio && layers.bg?.type !== 'file') fileAudio.pause()
+        try { old.out.disconnect() } catch {}
+      }, 2000)
+    }
+    layers[which] = null
+    if (type === 'none') return
+    const L = makeLayer(type)
+    if (!L) return
+    L.out.gain.setTargetAtTime(layerVol(which), t, 0.6)
+    layers[which] = L
+  }
+  function applyVol(which) {
+    const L = layers[which]
+    if (L && ctx) L.out.gain.setTargetAtTime(layerVol(which), ctx.currentTime, 0.1)
+  }
+  function bgmOn() {
+    if (!ensureCtx()) return
+    ctx.resume()
+    setLayer('bg', S.bg)
+    setLayer('freq', S.freq)
+    master.gain.cancelScheduledValues(ctx.currentTime)
+    master.gain.setTargetAtTime(1, ctx.currentTime, 0.8)
+    bgmPlaying = true
+  }
+  function bgmOff(immediate) {
+    bgmPlaying = false
+    if (!ctx) return
+    master.gain.cancelScheduledValues(ctx.currentTime)
+    master.gain.setTargetAtTime(0, ctx.currentTime, immediate ? 0.15 : 1.2)
+    setTimeout(() => {
+      if (bgmPlaying) return
+      setLayer('bg', 'none'); setLayer('freq', 'none')
+      if (fileAudio) fileAudio.pause()
+    }, immediate ? 800 : 5000)
+  }
+  let bgmPlaying = false
+  function onSetting(id) {
+    if (!bgmPlaying) return
+    if (id === 'bg') setLayer('bg', S.bg)
+    if (id === 'freq') setLayer('freq', S.freq)
+    if (id === 'bgVol') applyVol('bg')
+    if (id === 'freqVol') applyVol('freq')
+  }
+
+  // ---------- 내 파일(IndexedDB) ----------
+  const DB = 'maedeup_affirm_files'
+  function idb() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open(DB, 1)
+      r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'id' })
+      r.onsuccess = () => res(r.result)
+      r.onerror = () => rej(r.error)
+    })
+  }
+  async function tx(mode, fn) {
+    const db = await idb()
+    return new Promise((res, rej) => {
+      const t = db.transaction('files', mode)
+      const st = t.objectStore('files')
+      const out = fn(st)
+      t.oncomplete = () => res(out && out.result !== undefined ? out.result : out)
+      t.onerror = () => rej(t.error)
+    })
+  }
+  let fileList = []
+  async function refreshFiles() {
+    try {
+      const all = await tx('readonly', (st) => st.getAll())
+      fileList = (all || []).map(({ id, name }) => ({ id, name }))
+    } catch { fileList = [] }
+    const box = $('files')
+    box.innerHTML = ''
+    fileList.forEach((f) => {
+      const row = document.createElement('div')
+      row.className = 'file' + (f.id === S.fileId ? ' on' : '')
+      const name = document.createElement('span'); name.textContent = f.name
+      const pick = document.createElement('button'); pick.className = 'btn small'; pick.type = 'button'
+      pick.textContent = f.id === S.fileId ? '선택됨' : '고르기'
+      pick.onclick = () => chooseFile(f.id)
+      const del = document.createElement('button'); del.className = 'x'; del.type = 'button'; del.textContent = '×'
+      del.setAttribute('aria-label', `${f.name} 삭제`)
+      del.onclick = async () => {
+        if (!confirm(`‘${f.name}’을 지울까요?`)) return
+        await tx('readwrite', (st) => st.delete(f.id))
+        if (S.fileId === f.id) { S.fileId = null; persist(); await loadFileAudio() }
+        refreshFiles()
+      }
+      row.append(name, pick, del)
+      box.append(row)
+    })
+  }
+  async function loadFileAudio() {
+    if (fileUrl) { URL.revokeObjectURL(fileUrl); fileUrl = null }
+    if (!S.fileId) { if (fileAudio) fileAudio.removeAttribute('src'); return }
+    try {
+      const rec = await tx('readonly', (st) => st.get(S.fileId))
+      if (!rec) return
+      fileUrl = URL.createObjectURL(rec.blob)
+      if (!fileAudio) { fileAudio = new Audio(); fileAudio.loop = true }
+      fileAudio.src = fileUrl
+    } catch {}
+  }
+  async function chooseFile(id) {
+    S.fileId = id; S.bg = 'file'; $('bg').value = 'file'; persist()
+    const wasFile = layers.bg?.type === 'file'
+    await loadFileAudio()
+    if (bgmPlaying) {
+      if (wasFile) fileAudio.play().catch(() => {})
+      else setLayer('bg', 'file')
+    }
+    refreshFiles()
+  }
+  $('fileIn').addEventListener('change', async (e) => {
+    const files = [...e.target.files]
+    e.target.value = ''
+    let last = null
+    for (const f of files) {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+      try {
+        await tx('readwrite', (st) => st.put({ id, name: f.name, blob: f }))
+        last = id
+      } catch { alert(`‘${f.name}’을 저장하지 못했어요(용량 부족일 수 있어요).`) }
+    }
+    if (last) await chooseFile(last)
+    else refreshFiles()
+  })
+  $('bg').addEventListener('change', () => {
+    if (S.bg === 'file' && !S.fileId) alert('먼저 아래 ‘내 ASMR·음악 파일 올리기’로 파일을 올려 주세요.')
+  })
+  if ('indexedDB' in window) { refreshFiles(); loadFileAudio() }
+
+  // ---------- 재생 흐름 ----------
+  let state = 'idle' // idle | playing | paused
+  let pos = { round: 0, i: 0 }
+  let runId = 0
+  let wakeLock = null
+
+  function sleep(ms, id) {
+    return new Promise((res) => {
+      const end = Date.now() + ms
+      const tick = () => {
+        if (id !== runId) return res(false)
+        const left = end - Date.now()
+        if (left <= 0) return res(true)
+        setTimeout(tick, Math.min(left, 200))
+      }
+      tick()
+    })
+  }
+  function activeIdx() { return lines().map((s, i) => (s.trim() ? i : -1)).filter((i) => i >= 0) }
+  function totalRounds() { return S.mode === 'loop' ? Infinity : S.repeat }
+  function highlight(i) {
+    document.querySelectorAll('.aff').forEach((el) => el.classList.toggle('now', +el.dataset.i === i))
+  }
+  function setStatus(title, line) { $('stTitle').textContent = title; $('stLine').textContent = line }
+  function roundLabel(r) { return S.mode === 'loop' ? `${r + 1}바퀴째 · 무한 반복` : `${r + 1} / ${S.repeat}바퀴` }
+  function paintBtns() {
+    const playing = state === 'playing'
+    $('icoPlay').style.display = playing ? 'none' : ''
+    $('icoPause').style.display = playing ? '' : 'none'
+    $('playBtn').setAttribute('aria-label', playing ? '일시정지' : '재생')
+    $('stopBtn').disabled = state === 'idle'
+  }
+  async function lockScreen(on) {
+    try {
+      if (on && 'wakeLock' in navigator && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen')
+        wakeLock.addEventListener('release', () => { wakeLock = null })
+      } else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null }
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state === 'playing') lockScreen(true)
+  })
+
+  async function run() {
+    const id = ++runId
+    while (pos.round < totalRounds()) {
+      while (pos.i < N) {
+        if (id !== runId) return
+        const text = (lines()[pos.i] || '').trim()
+        if (text) {
+          highlight(pos.i)
+          setStatus(roundLabel(pos.round), text)
+          await speak(text)
+          if (id !== runId) return
+          const more = activeIdx().some((k) => k > pos.i)
+          if (more) {
+            if (!(await sleep(S.gap * 1000, id))) return
+          }
+        }
+        pos.i++
+      }
+      pos.round++
+      pos.i = 0
+      if (!activeIdx().length) { finish('적힌 문장이 없어서 멈췄어요'); return }
+      if (pos.round < totalRounds()) {
+        highlight(-1)
+        setStatus(roundLabel(pos.round - 1) + ' 끝', `${S.roundGap}초 쉬고 다시 시작해요`)
+        if (!(await sleep(S.roundGap * 1000, id))) return
+      }
+    }
+    finish(`${S.repeat}바퀴를 모두 읽었어요`)
+  }
+  function finish(msg) {
+    runId++
+    state = 'idle'
+    pos = { round: 0, i: 0 }
+    highlight(-1)
+    if (S.endKeep) setStatus('다 읽었어요', msg + ' · 배경음은 계속 흘러요 (■로 끄기)')
+    else { bgmOff(false); setStatus('다 읽었어요', msg) }
+    if (!S.endKeep) lockScreen(false)
+    paintBtns()
+    if (S.endKeep && bgmPlaying) $('stopBtn').disabled = false
+  }
+
+  $('playBtn').addEventListener('click', () => {
+    if (state === 'playing') {
+      // 일시정지: 지금 문장은 처음부터 다시 읽도록 위치만 기억
+      runId++
+      synth && synth.cancel()
+      state = 'paused'
+      if (ctx) ctx.suspend()
+      if (fileAudio) fileAudio.pause()
+      setStatus('잠시 멈춤', '다시 누르면 지금 문장부터 이어서 읽어요')
+      paintBtns()
+      return
+    }
+    if (!activeIdx().length) {
+      setStatus('문장이 비어 있어요', '확언을 한 문장 이상 적어 주세요')
+      return
+    }
+    if (state === 'idle') pos = { round: 0, i: 0 }
+    const resuming = state === 'paused'
+    state = 'playing'
+    if (resuming && ctx) {
+      ctx.resume()
+      if (layers.bg?.type === 'file' && fileAudio) fileAudio.play().catch(() => {})
+    }
+    bgmOn()
+    lockScreen(true)
+    paintBtns()
+    run()
+  })
+  $('stopBtn').addEventListener('click', () => {
+    runId++
+    synth && synth.cancel()
+    state = 'idle'
+    pos = { round: 0, i: 0 }
+    if (ctx) ctx.resume()
+    bgmOff(true)
+    lockScreen(false)
+    highlight(-1)
+    setStatus('정지했어요', '재생을 누르면 처음부터 시작해요')
+    paintBtns()
+  })
+
+  renderAffs()
+  paintBtns()
+})()
+</script>
+</body>
+</html>

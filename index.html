@@ -168,24 +168,49 @@
   <section class="card">
     <h2><span>목소리와 속도</span><button class="btn small" id="preview" type="button">미리 듣기</button></h2>
     <div class="row">
+      <label class="lbl">읽는 목소리</label>
+      <div class="seg" role="group" aria-label="읽는 목소리 종류">
+        <button type="button" id="engAi">AI 음성</button>
+        <button type="button" id="engDev">기기 음성</button>
+      </div>
+    </div>
+    <div id="aiBox">
+      <div class="row">
+        <label class="lbl" for="elVoice">AI 목소리</label>
+        <select id="elVoice"><option value="">목록을 불러와 주세요</option></select>
+        <button class="btn small" id="elLoad" type="button">목록 불러오기</button>
+      </div>
+      <div class="row">
+        <label class="lbl" for="elStab">안정감</label>
+        <div class="slider"><input type="range" id="elStab" min="0.2" max="0.9" step="0.05" /><span class="val" id="elStabV"></span></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="elMake" type="button">다섯 문장 미리 만들기</button>
+      </div>
+      <p class="hint" id="aiNote"></p>
+      <p class="hint">AI 음성은 ElevenLabs로 만들어요. 처음 읽거나 문장·목소리를 바꾼 뒤에만 새로 만들고, 만든 음성은 이 기기에 저장돼서 다음부턴 바로(인터넷 없이도) 재생돼요. 아이폰에서도 배경음이 끊기지 않아요. 안정감이 높을수록 차분하고 일정하게, 낮을수록 감정이 풍부하게 읽어요. 말 빠르기는 AI 음성에선 0.7~1.2배까지 적용돼요.</p>
+    </div>
+    <div id="devBox">
+    <div class="row">
       <label class="lbl" for="voice">목소리</label>
       <select id="voice"></select>
       <button class="btn small" id="reloadVoices" type="button">목록 다시 읽기</button>
+    </div>
+    <div class="row">
+      <label class="lbl" for="pitch">음 높이</label>
+      <div class="slider"><input type="range" id="pitch" min="0.6" max="1.4" step="0.05" /><span class="val" id="pitchV"></span></div>
+    </div>
+    <p class="hint" id="voiceNote"></p>
+    <p class="hint">기기 음성은 폰에 깔린 음성(TTS)을 써요. 아이폰에선 읽는 동안 배경음이 끊기거나 작아질 수 있어요.</p>
     </div>
     <div class="row">
       <label class="lbl" for="rate">말 빠르기</label>
       <div class="slider"><input type="range" id="rate" min="0.5" max="1.5" step="0.05" /><span class="val" id="rateV"></span></div>
     </div>
     <div class="row">
-      <label class="lbl" for="pitch">음 높이</label>
-      <div class="slider"><input type="range" id="pitch" min="0.6" max="1.4" step="0.05" /><span class="val" id="pitchV"></span></div>
-    </div>
-    <div class="row">
       <label class="lbl" for="vvol">목소리 크기</label>
       <div class="slider"><input type="range" id="vvol" min="0.1" max="1" step="0.05" /><span class="val" id="vvolV"></span></div>
     </div>
-    <p class="hint" id="voiceNote"></p>
-    <p class="hint">목소리는 기기에 깔린 음성(TTS)을 써요. 기기·브라우저마다 고를 수 있는 목소리가 달라요.</p>
   </section>
 
   <!-- 내 목소리 보정 -->
@@ -328,6 +353,7 @@
   const defaults = {
     rate: 0.85, pitch: 1, vvol: 1, voice: '', voiceAuto: true, gap: 4, roundGap: 8,
     mode: 'count', repeat: 3, endKeep: false,
+    engine: 'ai', elVoice: '', elVoiceName: '', elStab: 0.5, pass: '',
     fxOn: true, fxTone: 0.96, fxWarm: 0.5, fxRev: 0.3,
     bg: 'rain', bgVol: 0.35, freq: 'none', freqVol: 0.15, fileId: null,
   }
@@ -379,7 +405,7 @@
       t.value = L[i] || ''
       t.placeholder = '예) ' + examples[i]
       t.setAttribute('aria-label', `확언 ${i + 1}`)
-      t.addEventListener('input', () => { lines()[i] = t.value; autosize(t); persist() })
+      t.addEventListener('input', () => { lines()[i] = t.value; autosize(t); persist(); renderClip(i) })
       const col = document.createElement('div')
       col.className = 'affcol'
       const clip = document.createElement('div')
@@ -446,6 +472,7 @@
   bindRange('fxTone', (x) => x.toFixed(2) + '배')
   bindRange('fxWarm', pct)
   bindRange('fxRev', pct)
+  bindRange('elStab', pct)
 
   function seg(aId, bId, getOn, set) {
     const a = $(aId), b = $(bId)
@@ -458,6 +485,12 @@
   const paintMode = seg('modeCount', 'modeLoop', () => S.mode === 'count', (c) => { S.mode = c ? 'count' : 'loop'; $('countWrap').style.display = c ? '' : 'none' })
   $('countWrap').style.display = S.mode === 'count' ? '' : 'none'
   void paintMode
+  seg('engAi', 'engDev', () => S.engine === 'ai', (ai) => { S.engine = ai ? 'ai' : 'device'; paintEngine() })
+  function paintEngine() {
+    $('aiBox').style.display = S.engine === 'ai' ? '' : 'none'
+    $('devBox').style.display = S.engine === 'ai' ? 'none' : ''
+    for (let i = 0; i < N; i++) if (typeof renderClip === 'function') renderClip(i)
+  }
   seg('fxOnBtn', 'fxOffBtn', () => S.fxOn, (on) => { S.fxOn = on })
   seg('endStop', 'endKeep', () => !S.endKeep, (stop) => { S.endKeep = !stop })
   $('repeat').value = S.repeat
@@ -550,9 +583,15 @@
     })
   }
   $('preview').addEventListener('click', () => {
-    const t = lines().find((s) => s.trim()) || examples[0]
     if (state !== 'idle') return
-    speak(t)
+    const i = lines().findIndex((s) => s.trim())
+    if (S.engine === 'ai') {
+      if (i < 0) { alert('확언을 한 문장 이상 적어 주세요.'); return }
+      ensureCtx(); ctx.resume()
+      ensureAi(i).then((k) => { if (k) playClip(k) })
+      return
+    }
+    speak(i >= 0 ? lines()[i].trim() : examples[0])
   })
 
   // ---------- 배경음(Web Audio) ----------
@@ -892,7 +931,7 @@
   async function loadClipMeta() {
     try {
       const all = await tx('readonly', (st) => st.getAll(), 'clips')
-      ;(all || []).forEach((c) => { clipMeta[c.key] = { kind: c.kind, name: c.name, dur: c.dur, start: c.start, end: c.end } })
+      ;(all || []).forEach((c) => { clipMeta[c.key] = { kind: c.kind, name: c.name, dur: c.dur, start: c.start, end: c.end, sig: c.sig } })
     } catch {}
     for (let i = 0; i < N; i++) renderClip(i)
   }
@@ -925,6 +964,15 @@
       return
     }
     btn('● 녹음', () => startRec(i), 'rec')
+    const txt = (lines()[i] || '').trim()
+    if (S.engine === 'ai' && txt) {
+      const am = clipMeta[aiKey(i)]
+      const tag = document.createElement('span')
+      if (aiPending[aiKey(i)]) tag.textContent = 'AI 음성 만드는 중…'
+      else if (am && am.sig === aiSig(txt)) { tag.textContent = 'AI 음성 준비됨'; tag.className = 'tag' }
+      else tag.textContent = am ? '문장 바뀜 · 재생 때 새로 만들어요' : '재생 때 AI 음성을 만들어요'
+      queueMicrotask(() => box.append(tag))
+    }
     const fileBtn = btn('파일 올리기', () => fin.click())
     const fin = document.createElement('input')
     fin.type = 'file'; fin.accept = 'audio/*'; fin.hidden = true
@@ -1027,6 +1075,106 @@
   })
   if ('indexedDB' in window) loadClipMeta()
 
+  // ---------- AI 음성(ElevenLabs, 서버 /api 경유) ----------
+  const aiKey = (i, m = curMonth) => `${m}:${i}:ai`
+  const aiSpeed = () => Math.min(1.2, Math.max(0.7, S.rate))
+  const aiSig = (text) => [S.elVoice, S.elStab, aiSpeed(), text].join('|')
+  const aiPending = {}
+  function aiMsg(t) { $('aiNote').textContent = t }
+  async function api(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json' }
+    if (S.pass) headers['x-app-pass'] = S.pass
+    const r = await fetch(path, { ...opts, headers })
+    if (r.status === 401) {
+      const j = await r.clone().json().catch(() => ({}))
+      if (j.error === 'passcode') {
+        const p = prompt('앱 암호를 입력해 주세요. (Vercel에 넣은 APP_PASSCODE)')
+        if (p) { S.pass = p.trim(); persist(); return api(path, opts) }
+      }
+    }
+    return r
+  }
+  async function errText(r) {
+    const j = await r.json().catch(() => null)
+    if (j?.error === 'no_key') return 'Vercel에 ElevenLabs 키가 아직 없어요. 키를 넣고 다시 배포해 주세요.'
+    return j?.message || `오류(${r.status})`
+  }
+  async function loadElVoices() {
+    aiMsg('AI 목소리 목록을 불러오는 중…')
+    try {
+      const r = await api('/api/voices')
+      if (!r.ok) { aiMsg('목록을 못 불러왔어요: ' + (await errText(r))); return }
+      const { voices } = await r.json()
+      const sel = $('elVoice')
+      sel.innerHTML = ''
+      voices.forEach((v) => {
+        const o = document.createElement('option')
+        o.value = v.id
+        o.textContent = [v.name, v.gender && ({ female: '여성', male: '남성' }[v.gender] || v.gender), v.accent].filter(Boolean).join(' · ')
+        sel.append(o)
+      })
+      if (voices.some((v) => v.id === S.elVoice)) sel.value = S.elVoice
+      else if (voices.length) { S.elVoice = voices[0].id; S.elVoiceName = voices[0].name; persist() }
+      aiMsg(`AI 목소리 ${voices.length}개를 불러왔어요. ‘미리 듣기’로 들어보세요.`)
+    } catch { aiMsg('인터넷 연결을 확인해 주세요.') }
+  }
+  $('elLoad').addEventListener('click', loadElVoices)
+  $('elVoice').addEventListener('change', () => {
+    S.elVoice = $('elVoice').value
+    S.elVoiceName = $('elVoice').selectedOptions[0]?.textContent || ''
+    persist()
+    for (let i = 0; i < N; i++) renderClip(i)
+  })
+  if (S.elVoice) {
+    const o = document.createElement('option'); o.value = S.elVoice; o.textContent = S.elVoiceName || '저장된 목소리'
+    $('elVoice').innerHTML = ''; $('elVoice').append(o)
+  }
+
+  // 문장 i의 AI 음성을 준비(이미 같은 설정으로 만든 게 있으면 그대로) → 클립 키 반환, 실패 시 null
+  async function ensureAi(i) {
+    const text = (lines()[i] || '').trim()
+    const key = aiKey(i)
+    if (!text) return null
+    const sig = aiSig(text)
+    if (clipMeta[key] && clipMeta[key].sig === sig) return key
+    if (!S.elVoice) { aiMsg('먼저 ‘목록 불러오기’로 AI 목소리를 골라 주세요.'); return null }
+    if (aiPending[key]?.sig === sig) return aiPending[key].p
+    const p = (async () => {
+      try {
+        const r = await api('/api/tts', { method: 'POST', body: JSON.stringify({ text, voiceId: S.elVoice, stability: S.elStab, speed: aiSpeed() }) })
+        if (!r.ok) { aiMsg('AI 음성을 못 만들었어요: ' + (await errText(r))); return null }
+        const blob = await r.blob()
+        if (!ensureCtx()) return null
+        const buf = await decode(blob)
+        const meta = { kind: 'ai', name: 'AI 음성', sig, dur: buf.duration, start: 0, end: buf.duration }
+        await tx('readwrite', (st) => st.put({ key, blob, ...meta }), 'clips')
+        clipMeta[key] = meta
+        clipBufs[key] = buf
+        return key
+      } catch {
+        aiMsg('AI 음성을 못 만들었어요. 인터넷 연결을 확인해 주세요.')
+        return null
+      } finally {
+        delete aiPending[key]
+        renderClip(i)
+      }
+    })()
+    aiPending[key] = { sig, p }
+    renderClip(i)
+    return p
+  }
+  $('elMake').addEventListener('click', async () => {
+    const idx = [...Array(N).keys()].filter((i) => (lines()[i] || '').trim() && !clipMeta[clipKey(i)])
+    if (!idx.length) { aiMsg('AI로 만들 문장이 없어요. (녹음·파일이 있는 문장은 그걸 틀어요)'); return }
+    let ok = 0
+    for (let n = 0; n < idx.length; n++) {
+      aiMsg(`AI 음성 만드는 중… (${n + 1}/${idx.length})`)
+      if (await ensureAi(idx[n])) ok++
+      else return
+    }
+    aiMsg(`${ok}문장 준비 완료! 이제 재생하면 바로 나와요.`)
+  })
+
   // ---------- 재생 흐름 ----------
   let state = 'idle' // idle | playing | paused
   let pos = { round: 0, i: 0 }
@@ -1083,7 +1231,15 @@
           const key = clipKey(pos.i)
           setStatus(roundLabel(pos.round), text || (clipMeta[key].kind === 'rec' ? '(내 녹음)' : '(올린 음성)'))
           if (clipMeta[key]) await playClip(key)
-          else await speak(text)
+          else if (S.engine === 'ai' && text) {
+            // 다음 문장도 미리 만들어 두면 끊김이 줄어든다
+            const nx = activeIdx().find((k) => k > pos.i && !clipMeta[clipKey(k)])
+            const k = await ensureAi(pos.i)
+            if (id !== runId) return
+            if (nx !== undefined) ensureAi(nx)
+            if (k) await playClip(k)
+            else await speak(text) // AI가 실패하면 기기 음성으로라도 읽기
+          } else await speak(text)
           if (id !== runId) return
           const more = activeIdx().some((k) => k > pos.i)
           if (more) {
@@ -1159,6 +1315,7 @@
   })
 
   renderAffs()
+  paintEngine()
   paintBtns()
 })()
 </script>

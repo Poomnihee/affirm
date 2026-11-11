@@ -10,3 +10,14 @@
 - 주파수: 174/396/432/528Hz, 바이노럴 세타·알파·델타(이어폰)
 
 빌드 없이 `index.html` 하나로 동작합니다. Vercel에 저장소를 연결하면 그대로 배포돼요(Framework: Other, 빌드 명령 없음).
+
+## AI 음성(ElevenLabs) 설정
+
+1. elevenlabs.io 가입 → 프로필 → API Keys에서 키 만들기(권한: Text to Speech, Voices 읽기)
+2. Vercel → 프로젝트 → Settings → Environment Variables
+   - `ELEVENLABS_API_KEY` = 받은 키
+   - `APP_PASSCODE` = 아무 암호(선택이지만 권장 — 다른 사람이 내 사용량을 쓰지 못하게)
+3. Deployments에서 Redeploy
+4. 앱 → 목소리와 속도 → AI 음성 → 목록 불러오기
+
+키는 서버 함수(`api/`)에서만 쓰이고 브라우저로 보내지지 않아요.

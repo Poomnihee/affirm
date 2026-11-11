@@ -539,7 +539,8 @@
       u.volume = S.vvol
       let done = false
       const fin = () => { if (!done) { done = true; clearTimeout(guard); resolve() } }
-      u.onend = fin
+      u.onstart = () => setTimeout(reviveBgm, 50)
+      u.onend = () => { reviveBgm(); fin() }
       u.onerror = fin
       // 이벤트가 끝내 안 오는 브라우저 대비: 글자 수로 넉넉한 상한
       const guard = setTimeout(fin, 4000 + (text.length * 400) / S.rate)
@@ -565,6 +566,7 @@
     if (!AC) return null
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback' } catch {}
     ctx = new AC()
+    ctx.onstatechange = () => reviveBgm()
     master = ctx.createGain()
     master.gain.value = 0
     master.connect(ctx.destination)
@@ -712,6 +714,14 @@
     }, immediate ? 800 : 5000)
   }
   let bgmPlaying = false
+  // 아이폰은 음성 읽기(TTS)가 시작되면 페이지의 다른 소리를 끊거나 줄여 버린다.
+  // 배경음이 멈춘 걸 감지하면 바로 다시 살린다.
+  function reviveBgm() {
+    if (!bgmPlaying || state === 'paused' || !ctx) return
+    if (ctx.state !== 'running') ctx.resume().catch(() => {})
+    if (layers.bg?.type === 'file' && fileAudio && fileAudio.paused) fileAudio.play().catch(() => {})
+  }
+  setInterval(reviveBgm, 300)
   function onSetting(id) {
     if (!bgmPlaying) return
     if (id === 'bg') setLayer('bg', S.bg)
@@ -778,7 +788,10 @@
       const rec = await tx('readonly', (st) => st.get(S.fileId))
       if (!rec) return
       fileUrl = URL.createObjectURL(rec.blob)
-      if (!fileAudio) { fileAudio = new Audio(); fileAudio.loop = true }
+      if (!fileAudio) {
+        fileAudio = new Audio(); fileAudio.loop = true
+        fileAudio.addEventListener('pause', () => setTimeout(reviveBgm, 100))
+      }
       fileAudio.src = fileUrl
     } catch {}
   }
